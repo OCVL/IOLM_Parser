@@ -9,9 +9,10 @@ from tkinter import filedialog as fd
 
 
 class CSV_Class:
-    def __init__(self, fPath, fDes):
+    def __init__(self, fPath, fDes, fname):
         self.filepath = fPath
         self.fDest = fDes
+        self.name = fname
 
     def create(self):
         pdfObj = open(self.filepath, 'rb')
@@ -74,8 +75,12 @@ class CSV_Class:
         else:
             id = ""
 
-        # Make the CSV File
-        csv_name = id + '_IOMasterInfo.csv'
+        # Did the user give a name for the CSV?
+        if self.name == '':
+            # Make the CSV File if needed
+            csv_name = id + '_IOMasterInfo.csv'
+        else:
+            csv_name = self.name + '.csv'
 
         # Change to the directory where the csv should be saved
         os.chdir(self.fDest)
@@ -108,6 +113,15 @@ class CSV_Class:
 if __name__ == "__main__":
     file = fd.askopenfilename()
     fileDestination = fd.askdirectory()
-    # print(fileDestination)
-    c = CSV_Class(file, fileDestination)
+
+    option = input("Create your own name for the CSV? Y or N\n")
+
+    if option == 'Y':
+        name = input('Enter name of the CSV\n')
+    else:
+        name = ''
+
+    print(name)
+
+    c = CSV_Class(file, fileDestination, name)
     c.create()
