@@ -1,4 +1,5 @@
 # Libraries needed
+import os
 from os import path
 import PyPDF2
 import re
@@ -6,9 +7,11 @@ import csv
 from tkinter import filedialog as fd
 
 
+
 class CSV_Class:
-    def __init__(self, fPath):
+    def __init__(self, fPath, fDes):
         self.filepath = fPath
+        self.fDest = fDes
 
     def create(self):
         pdfObj = open(self.filepath, 'rb')
@@ -74,6 +77,9 @@ class CSV_Class:
         # Make the CSV File
         csv_name = id + '_IOMasterInfo.csv'
 
+        # Change to the directory where the csv should be saved
+        os.chdir(self.fDest)
+
         # Check to see if the file already exists with the name generated above if so add a leading number to the
         # file name
         if path.exists(csv_name):
@@ -101,5 +107,7 @@ class CSV_Class:
 
 if __name__ == "__main__":
     file = fd.askopenfilename()
-    c = CSV_Class(file)
+    fileDestination = fd.askdirectory()
+    # print(fileDestination)
+    c = CSV_Class(file, fileDestination)
     c.create()
