@@ -166,6 +166,7 @@ class CSV_Class:
         # Set up the directory to be returned on top of the creation of the CSV
         directory = dict([
             ('ID', id),  # ID number if applicable
+            ('Exam Date', eDate),  # Exam Date
             ('R Eye', r),  # Right eye label
             ('AL R', abstractedContent[0]),  # Axial Length of the right eye
             ('K1 R', abstractedContent[2]),  # Corneal Curvature Values k1 for the right eye
@@ -191,12 +192,10 @@ if __name__ == "__main__":
     else:
         name = ''
 
-    print(name)
-
     c = CSV_Class(file, fileDestination, name)
 
     if c == -1:
-        print("PDF selected does not exist!\n")
+        print("PDF selected does not exist!\n\n")
     else:
         content = c.openFile()
         d = c.create(content)
