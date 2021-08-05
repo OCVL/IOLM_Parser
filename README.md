@@ -11,6 +11,13 @@ A repository that facilitates the parsing and extraction of information from IOL
      * Corneal Curvature values
      * Anterior Chamber Depth Values
 
+### Python 3.9 with the Following Libraries Needed:
+* OS
+* PyPDF2
+* re
+* csv
+* tkinter
+
 ## Information on how to operate the script:
 ### Run IO_Master_Parsing.py:
 When ran, the script prompts the user to select the PDF to be used in the first pop-up file explorer.
