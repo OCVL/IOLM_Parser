@@ -30,7 +30,7 @@ class CSV_Class:
     def create(self, pCont):
         # Use the page contents of the PDF and split into individual strings to be checked for
         stringList = pCont.split('\n')
-        print(stringList)
+        # print(stringList)
         s_compAL = "Comp. AL:"
         s_avg = "Avg:"
         s_acd = "ACD:"
