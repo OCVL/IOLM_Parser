@@ -27,7 +27,7 @@ class CSV_Class:
         else:
             return -1
 
-    def create(self, pCont):
+    def create_v5(self, pCont):
         # Use the page contents of the PDF and split into individual strings to be checked for
         stringList = pCont.split('\n')
         # print(stringList)
@@ -47,7 +47,7 @@ class CSV_Class:
         header2 = "Corneal Curvature K1 (D)"
         header3 = "Corneal Curvature K2 (D)"
         header4 = "Anterior Chamber Depth (mm)"
-        abstractedContent = []
+        extractedContent = []
         d = []
         v1 = []
         v2 = []
@@ -73,45 +73,71 @@ class CSV_Class:
                 id = i.string
                 # print(id)
 
-        # Make sure that the correct values are taken from the values of interest
-        if len(v1) == 2:  # axial values
-            temp = v1[0].split(' ')
-            # print(temp)
-            abstractedContent.append(temp[2])
-            temp = v1[1].split(' ')
-            abstractedContent.append(temp[2])
+        # Check to see if any of the v arrays are empty or missing an eye's measurement - if so add NAs to arrays
+        if not v1:
+            v1.append("NA")
+            v1.append("NA")
         elif len(v1) == 1:
-            temp = v1[0].split(' ')
-            abstractedContent.append(temp[2])
-            abstractedContent.append("")
+            v1.append("NA")
 
-        if len(v2) == 2:  # k1 and k2 values
-            temp = v2[0].split(' ')
-            t = temp[1].split('/')
-            abstractedContent.append(t[0])
-            abstractedContent.append(t[1])
-
-            temp = v2[1].split(' ')
-            t = temp[1].split('/')
-            abstractedContent.append(t[0])
-            abstractedContent.append(t[1])
+        if not v2:
+            v2.append("NA/NA")
+            v2.append("NA/NA")
         elif len(v2) == 1:
-            temp = v2[0].split(' ')
-            t = temp[1].split('/')
-            abstractedContent.append(t[0])
-            abstractedContent.append(t[1])
-            abstractedContent.append("")
-            abstractedContent.append("")
+            v2.append("NA/NA")
 
-        if len(v3) == 2:  # chamber depth
-            temp = v3[0].split(' ')
-            abstractedContent.append(temp[2])
-            temp = v3[1].split(' ')
-            abstractedContent.append(temp[2])
+        if not v3:
+            v3.append("NA")
+            v3.append("NA")
         elif len(v3) == 1:
-            temp = v3[0].split(' ')
-            abstractedContent.append(temp[2])
-            abstractedContent.append("")
+            v3.append("NA")
+
+        # Make sure that the correct values are taken from the values of interest
+        # Axial Length Information
+        if len(v1) == 2:  # axial values
+            if v1[0] == "NA":
+                extractedContent.append(v1[0])
+            else:
+                temp = v1[0].split(' ')
+                extractedContent.append(temp[2])
+
+            if v1[1] == "NA":
+                extractedContent.append(v1[1])
+            else:
+                temp = v1[1].split(' ')
+                extractedContent.append(temp[2])
+
+        # Corneal Curvature Values
+        if len(v2) == 2:  # k1 and k2 values
+            if v2[0] == "NA/NA":
+                extractedContent.append("NA")
+                extractedContent.append("NA")
+            else:
+                temp = v2[0].split(' ')
+                t = temp[1].split('/')
+                extractedContent.append(t[0])
+                extractedContent.append(t[1])
+            if v2[1] == "NA/NA":
+                extractedContent.append("NA")
+                extractedContent.append("NA")
+            else:
+                temp = v2[1].split(' ')
+                t = temp[1].split('/')
+                extractedContent.append(t[0])
+                extractedContent.append(t[1])
+
+        # Anterior Chamber Depth Values
+        if len(v3) == 2:  # chamber depth
+            if v3[0] == "NA":
+                extractedContent.append(v3[0])
+            else:
+                temp = v3[0].split(' ')
+                extractedContent.append(temp[2])
+            if v3[1] == "NA":
+                extractedContent.append(v3[1])
+            else:
+                temp = v3[1].split(' ')
+                extractedContent.append(temp[2])
 
         # The exam date is always going to be the second date
         if len(d) == 3:
@@ -151,8 +177,8 @@ class CSV_Class:
 
         # Layout the information into the way it will be written to the CSV
         header = [stringList[3], "Eye", header1, header2, header3, header4]
-        row1 = [eDate, r, abstractedContent[0], abstractedContent[2], abstractedContent[3], abstractedContent[6]]
-        row2 = [eDate, l, abstractedContent[1], abstractedContent[4], abstractedContent[5], abstractedContent[7]]
+        row1 = [eDate, r, extractedContent[0], extractedContent[2], extractedContent[3], extractedContent[6]]
+        row2 = [eDate, l, extractedContent[1], extractedContent[4], extractedContent[5], extractedContent[7]]
 
         # Create and populate the CSV with the name from above
         with open(csv_name2, 'w', encoding='UTF8', newline='') as f:
@@ -168,15 +194,15 @@ class CSV_Class:
             ('ID', id),  # ID number if applicable
             ('Exam Date', eDate),  # Exam Date
             ('R Eye', r),  # Right eye label
-            ('AL R', abstractedContent[0]),  # Axial Length of the right eye
-            ('K1 R', abstractedContent[2]),  # Corneal Curvature Values k1 for the right eye
-            ('K2 R', abstractedContent[3]),  # Corneal Curvature Values k2 for the right eye
-            ('ACD R', abstractedContent[6]),  # Anterior Chamber Depth Values for the right eye
+            ('AL R', extractedContent[0]),  # Axial Length of the right eye
+            ('K1 R', extractedContent[2]),  # Corneal Curvature Values k1 for the right eye
+            ('K2 R', extractedContent[3]),  # Corneal Curvature Values k2 for the right eye
+            ('ACD R', extractedContent[6]),  # Anterior Chamber Depth Values for the right eye
             ('L Eye', l),  # Left eye label
-            ('Al L', abstractedContent[1]),  # Axial Length of the left eye
-            ('K1 L', abstractedContent[4]),  # Corneal Curvature Values K1 for the left eye
-            ('K2 L', abstractedContent[5]),  # Corneal Curvature Values K2 for the left eye
-            ('ACD L', abstractedContent[7])  # Anterior Chamber Depth Values for the left eye
+            ('Al L', extractedContent[1]),  # Axial Length of the left eye
+            ('K1 L', extractedContent[4]),  # Corneal Curvature Values K1 for the left eye
+            ('K2 L', extractedContent[5]),  # Corneal Curvature Values K2 for the left eye
+            ('ACD L', extractedContent[7])  # Anterior Chamber Depth Values for the left eye
         ])
         return directory
 
@@ -192,12 +218,12 @@ if __name__ == "__main__":
     else:
         name = ''
 
-    c = CSV_Class(file, fileDestination, name)
+    c2 = CSV_Class(file, fileDestination, name)
 
-    if c == -1:
+    if c2 == -1:
         print("PDF selected does not exist!\n\n")
     else:
-        content = c.openFile()
-        d = c.create(content)
+        content = c2.openFile()
+        doc = c2.create_v5(content)
 
-    print(d)
+    print(doc)
