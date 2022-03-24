@@ -21,8 +21,23 @@ class CSV_Class:
             pdfObj = open(self.filepath, 'rb')
             pdfReader = PyPDF2.PdfFileReader(pdfObj)
             numPages = pdfReader.numPages
-            pageObj = pdfReader.getPage(numPages - 1)
-            pageContents = pageObj.extractText()
+            # If there are more than 1 page to the document with the information
+            if numPages > 1:
+                print("More than 1 page found!")
+                pageObj = []
+                pageContents = []
+                for i in range(0, numPages):
+                    temp = pdfReader.getPage(i)
+                    print(temp)
+                    pageObj.append(pdfReader.getPage(i))
+                    pageContents.append(pageObj[i].extractText())
+                    print(pageContents)
+
+            else:
+                pageObj = pdfReader.getPage(numPages - 1)
+                pageContents = pageObj.extractText()
+                print(pageContents)
+
             return pageContents
         else:
             return -1
@@ -206,6 +221,10 @@ class CSV_Class:
         ])
         return directory
 
+    def create_v7(self, pCont):
+        stringList = pCont.split('\n')
+
+        return stringList
 
 if __name__ == "__main__":
     file = fd.askopenfilename()
@@ -224,6 +243,13 @@ if __name__ == "__main__":
         print("PDF selected does not exist!\n\n")
     else:
         content = c2.openFile()
-        doc = c2.create_v5(content)
+        version = input("What version are you using? 5 or 7?\n")
+        if version == "5":
+            doc = c2.create_v5(content)
+            print(doc)
+        elif version == "7":
+            doc2 = c2.create_v7(content)
+            # print(doc2)
 
-    print(doc)
+
+
