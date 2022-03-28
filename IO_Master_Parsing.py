@@ -1,7 +1,7 @@
 # Libraries needed
 import os
 from os import path
-import PyPDF2
+from pdfminer.high_level import extract_text
 import re
 import csv
 from tkinter import filedialog as fd
@@ -18,34 +18,17 @@ class CSV_Class:
     def openFile(self):
         ex = path.exists(self.filepath)
         if ex:
-            pdfObj = open(self.filepath, 'rb')
-            pdfReader = PyPDF2.PdfFileReader(pdfObj)
-            numPages = pdfReader.numPages
-            # If there are more than 1 page to the document with the information
-            if numPages > 1:
-                print("More than 1 page found!")
-                pageObj = []
-                pageContents = []
-                for i in range(0, numPages):
-                    temp = pdfReader.getPage(i)
-                    print(temp)
-                    pageObj.append(pdfReader.getPage(i))
-                    pageContents.append(pageObj[i].extractText())
-                    print(pageContents)
-
-            else:
-                pageObj = pdfReader.getPage(numPages - 1)
-                pageContents = pageObj.extractText()
-                print(pageContents)
-
-            return pageContents
+            text = extract_text(self.filepath)
+            print(repr(text))  # Think this is the orientation I want moving forward
+            return text
         else:
             return -1
 
     def create_v5(self, pCont):
         # Use the page contents of the PDF and split into individual strings to be checked for
         stringList = pCont.split('\n')
-        # print(stringList)
+
+        # Comparisons to use for the version 5 documents
         s_compAL = "Comp. AL:"
         s_avg = "Avg:"
         s_acd = "ACD:"
@@ -62,14 +45,17 @@ class CSV_Class:
         header2 = "Corneal Curvature K1 (D)"
         header3 = "Corneal Curvature K2 (D)"
         header4 = "Anterior Chamber Depth (mm)"
+
+        # Arrays used to store information
         extractedContent = []
         d = []
         v1 = []
         v2 = []
         v3 = []
 
-        # Abstract the data needed from the pdf
+        # Extract the data needed from the pdf content
         for x in stringList:
+            # Regular expressions found for the current line
             a = re.search(s_compAL, x)
             b = re.search(s_avg, x)
             c = re.search(s_acd, x)
@@ -86,37 +72,36 @@ class CSV_Class:
                 d.append(dates.string)
             if i:  # Finds the ID
                 id = i.string
-                # print(id)
 
-        # Check to see if any of the v arrays are empty or missing an eye's measurement - if so add NAs to arrays
+        # Check to see if any of the v arrays are empty or missing an eye's measurement - if so add N/As to arrays
         if not v1:
-            v1.append("NA")
-            v1.append("NA")
+            v1.append("N/A")
+            v1.append("N/A")
         elif len(v1) == 1:
-            v1.append("NA")
+            v1.append("N/A")
 
         if not v2:
-            v2.append("NA/NA")
-            v2.append("NA/NA")
+            v2.append("N/A/N/A")
+            v2.append("N/A/N/A")
         elif len(v2) == 1:
-            v2.append("NA/NA")
+            v2.append("N/A/N/A")
 
         if not v3:
-            v3.append("NA")
-            v3.append("NA")
+            v3.append("N/A")
+            v3.append("N/A")
         elif len(v3) == 1:
-            v3.append("NA")
+            v3.append("N/A")
 
         # Make sure that the correct values are taken from the values of interest
         # Axial Length Information
         if len(v1) == 2:  # axial values
-            if v1[0] == "NA":
+            if v1[0] == "N/A":
                 extractedContent.append(v1[0])
             else:
                 temp = v1[0].split(' ')
                 extractedContent.append(temp[2])
 
-            if v1[1] == "NA":
+            if v1[1] == "N/A":
                 extractedContent.append(v1[1])
             else:
                 temp = v1[1].split(' ')
@@ -124,17 +109,17 @@ class CSV_Class:
 
         # Corneal Curvature Values
         if len(v2) == 2:  # k1 and k2 values
-            if v2[0] == "NA/NA":
-                extractedContent.append("NA")
-                extractedContent.append("NA")
+            if v2[0] == "N/A/N/A":
+                extractedContent.append("N/A")
+                extractedContent.append("N/A")
             else:
                 temp = v2[0].split(' ')
                 t = temp[1].split('/')
                 extractedContent.append(t[0])
                 extractedContent.append(t[1])
-            if v2[1] == "NA/NA":
-                extractedContent.append("NA")
-                extractedContent.append("NA")
+            if v2[1] == "N/A/N/A":
+                extractedContent.append("N/A")
+                extractedContent.append("N/A")
             else:
                 temp = v2[1].split(' ')
                 t = temp[1].split('/')
@@ -143,12 +128,12 @@ class CSV_Class:
 
         # Anterior Chamber Depth Values
         if len(v3) == 2:  # chamber depth
-            if v3[0] == "NA":
+            if v3[0] == "N/A":
                 extractedContent.append(v3[0])
             else:
                 temp = v3[0].split(' ')
                 extractedContent.append(temp[2])
-            if v3[1] == "NA":
+            if v3[1] == "N/A":
                 extractedContent.append(v3[1])
             else:
                 temp = v3[1].split(' ')
@@ -219,12 +204,106 @@ class CSV_Class:
             ('K2 L', extractedContent[5]),  # Corneal Curvature Values K2 for the left eye
             ('ACD L', extractedContent[7])  # Anterior Chamber Depth Values for the left eye
         ])
+
         return directory
 
     def create_v7(self, pCont):
         stringList = pCont.split('\n')
+        print("Length of stringList = " + str(len(stringList)) + "\n")
+
+        # Remove blanks from list
+        while '' in stringList:
+            stringList.remove('')
+
+        print("Length of stringList after blanks are removed = " + str(len(stringList)) + "\n")
+        teeth = len(stringList)
+
+        # Regular Expressions to find certain strings
+        al_val = '[0-9]'
+        dkStr = '\u0394K'
+
+        # Arrays to store values
+        i = 0  # index into the stringList
+        bioVals = []
+        t = 0
+
+        for x in stringList:
+            # Find the four following Biometric values AL, CCT, ACD and LT
+            if x == 'AL:':
+                bioVals.append(x)
+                # First number following tag is the value of it
+                p = i + 1
+                while t == 0:
+                    temp = stringList[p]  # get the next string in the list
+                    a = re.match(al_val, temp)  # match it to be a number
+                    if a:
+                        al = a.string
+                        bioVals.append(al)  # Add it to the bioVal statistics array
+                        t = 1  # Break the while loop
+                    p += 1
+                t = 0
+            elif x == "CCT:":
+                bioVals.append(x)
+                # The number after the AL value number is the one we want
+                cct = findValue(i, stringList, al, teeth)
+                bioVals.append(cct)
+            elif x == "ACD:":
+                bioVals.append(x)
+                acd = findValue(i, stringList, cct, teeth)
+                bioVals.append(acd)
+            elif x == "LT:":
+                bioVals.append(x)
+                lt = findValue(i, stringList, acd, teeth)
+                bioVals.append(lt)
+            elif x == "SE:":
+                bioVals.append(x)
+                # First number following tag is the value of it
+                p = i + 1
+                while t == 0:
+                    temp = stringList[p]  # get the next string in the list
+                    b = re.match(al_val, temp, teeth)  # match it to be a number
+                    if b:
+                        se = b.string
+                        bioVals.append(se)  # Add it to the bioVal statistics array
+                        t = 1  # Break the while loop
+                    p += 1
+                t = 0
+            elif x == "K1:":
+                bioVals.append(x)
+                k1 = findValue(i, stringList, se, teeth)
+                bioVals.append(k1)
+            elif x == "K2:":
+                bioVals.append(x)
+                k2 = findValue(i, stringList, k1, teeth)
+                bioVals.append(k2)
+            elif x == "ΔK:":
+                bioVals.append(x)
+                dk = findValue(i, stringList, k2, teeth)
+                bioVals.append(dk)
+
+            i += 1  # Increment the index as the for loop goes through
+
+        print(bioVals)
 
         return stringList
+
+
+def findValue(i, arr, val, lenlen):
+    p = i + 1
+    t = 0
+    while t == 0:
+        temp = arr[p]
+        if temp == val:
+            d = arr[p + 1]
+            found = d
+            t = 1
+        p += 1
+        if p >= lenlen:
+            found = 0
+            return found
+
+    return found
+
 
 if __name__ == "__main__":
     file = fd.askopenfilename()
@@ -249,7 +328,4 @@ if __name__ == "__main__":
             print(doc)
         elif version == "7":
             doc2 = c2.create_v7(content)
-            # print(doc2)
-
-
-
+            print(doc2)
