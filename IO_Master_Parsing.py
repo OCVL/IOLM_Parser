@@ -19,7 +19,6 @@ class CSV_Class:
         ex = path.exists(self.filepath)
         if ex:
             text = extract_text(self.filepath)
-            print(text)  # Think this is the orientation I want moving forward
             return text
         else:
             return -1
@@ -232,19 +231,18 @@ class CSV_Class:
         header7 = "Corneal Curvature K2 (D)"
         header8 = "Detla K (D)"
 
-
         # Arrays to store values
         i = 0  # index into the stringList
-        extractedContent = []   # For the CSV down below
-        bioVals = []            # Want the first 8 entries that correspond to the analyze page of the PDF
-        dates = []              # Date of exam seems to be the third date found
-        eye = []                # Eye from the analyze page is the first one found
+        extractedContent = []  # For the CSV down below
+        bioVals = []  # Want the first 8 entries that correspond to the analyze page of the PDF
+        dates = []  # Date of exam seems to be the third date found
+        eye = []  # Eye from the analyze page is the first one found
         t = 0
 
         for x in stringList:
             # Find the Patient ID
             if x == 'Physician':
-                id = stringList[i+2]
+                id = stringList[i + 2]
 
             # Find all the dates in the strings
             d = re.search(s_date, x)
@@ -292,7 +290,7 @@ class CSV_Class:
                 p = i + 1
                 while t == 0:
                     temp = stringList[p]  # get the next string in the list
-                    b = re.match(al_val, temp, teeth)  # match it to be a number
+                    b = re.match(al_val, temp)  # match it to be a number
                     if b:
                         se = b.string
                         bioVals.append(se)  # Add it to the bioVal statistics array
@@ -357,7 +355,8 @@ class CSV_Class:
 
         # Layout the information into the way it will be written to the CSV
         header = ["Exam Date", "Eye", header1, header2, header3, header4, header5, header6, header7, header8]
-        row1 = [eDate, eyeFound, extractedContent[1], extractedContent[3], extractedContent[5], extractedContent[7], extractedContent[9], extractedContent[11], extractedContent[13], extractedContent[15]]
+        row1 = [eDate, eyeFound, extractedContent[1], extractedContent[3], extractedContent[5], extractedContent[7],
+                extractedContent[9], extractedContent[11], extractedContent[13], extractedContent[15]]
 
         # Create and populate the CSV with the name from above
         with open(csv_name2, 'w', encoding='UTF8', newline='') as f:
