@@ -1,4 +1,4 @@
-# IOLM_Parser - A Python script for abstracting data from IOLMaster PDF documents
+# IOLM_Parser - A Python script for Extracting data from IOLMaster PDF documents
 A repository that facilitates the parsing and extraction of information from IOLMaster PDFs.
 
 ### It performs 3 main functions:
