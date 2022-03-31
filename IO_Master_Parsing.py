@@ -19,7 +19,7 @@ class CSV_Class:
         ex = path.exists(self.filepath)
         if ex:
             text = extract_text(self.filepath)
-            print(repr(text))  # Think this is the orientation I want moving forward
+            print(text)  # Think this is the orientation I want moving forward
             return text
         else:
             return -1
@@ -209,25 +209,56 @@ class CSV_Class:
 
     def create_v7(self, pCont):
         stringList = pCont.split('\n')
-        print("Length of stringList = " + str(len(stringList)) + "\n")
 
         # Remove blanks from list
         while '' in stringList:
             stringList.remove('')
 
-        print("Length of stringList after blanks are removed = " + str(len(stringList)) + "\n")
         teeth = len(stringList)
 
         # Regular Expressions to find certain strings
         al_val = '[0-9]'
-        dkStr = '\u0394K'
+        s_date = '[0-3][0-9]/[0-1][0-9]/[0-2][0-9][0-9][0-9]'
+        OS = 'left'
+        OD = 'right'
+
+        # Headers to be used in the CSV document - might not use
+        header1 = "Axial Length (mm)"
+        header2 = "CCT (um)"
+        header3 = "Anterior Chamber Depth (mm)"
+        header4 = "LT (mm)"
+        header5 = "SE (D)"
+        header6 = "Corneal Curvature K1 (D)"
+        header7 = "Corneal Curvature K2 (D)"
+        header8 = "Detla K (D)"
+
 
         # Arrays to store values
         i = 0  # index into the stringList
-        bioVals = []
+        extractedContent = []   # For the CSV down below
+        bioVals = []            # Want the first 8 entries that correspond to the analyze page of the PDF
+        dates = []              # Date of exam seems to be the third date found
+        eye = []                # Eye from the analyze page is the first one found
         t = 0
 
         for x in stringList:
+            # Find the Patient ID
+            if x == 'Physician':
+                id = stringList[i+2]
+
+            # Find all the dates in the strings
+            d = re.search(s_date, x)
+            if d:
+                dates.append(d.string)
+
+            # Find the eye for the csv
+            r = re.search(OD, x)
+            l = re.search(OS, x)
+            if r:
+                eye.append(r.string)
+            elif l:
+                eye.append(l.string)
+
             # Find the four following Biometric values AL, CCT, ACD and LT
             if x == 'AL:':
                 bioVals.append(x)
@@ -283,9 +314,75 @@ class CSV_Class:
 
             i += 1  # Increment the index as the for loop goes through
 
-        print(bioVals)
+        # Get the data from the arrays
+        eDate = dates[2]
 
-        return stringList
+        if eye[0] == 'right':
+            eyeFound = "OD (right)"
+        elif eye[0] == 'left':
+            eyeFound = "OS (left)"
+
+        for i in range(0, 16):
+            extractedContent.append(bioVals[i])
+
+        # Check to make sure that there is an ID otherwise leave it blank
+        if "id" not in locals():
+            v = input('No ID was detected. Do you want to enter one? Y - N\n')
+            if v == 'Y':
+                q = input('Enter the id:\n')
+                id = q
+            else:
+                id = ""
+
+        # Did the user give a name for the CSV?
+        if self.name == '':
+            # Make the CSV File if needed
+            csv_name = id + '_IOMasterInfo.csv'
+        else:
+            csv_name = self.name + '_IOMasterInfo.csv'
+
+        # Change to the directory where the csv should be saved
+        os.chdir(self.fDest)
+
+        # Check to see if the file already exists with the name generated above if so add a leading number to the
+        # file name
+        if path.exists(csv_name):
+            i = 0
+            csv_name2 = csv_name
+            while path.exists(csv_name2):
+                csv_name2 = str(i) + '_' + csv_name
+                i = i + 1
+        else:
+            csv_name2 = csv_name
+
+        # Layout the information into the way it will be written to the CSV
+        header = ["Exam Date", "Eye", header1, header2, header3, header4, header5, header6, header7, header8]
+        row1 = [eDate, eyeFound, extractedContent[1], extractedContent[3], extractedContent[5], extractedContent[7], extractedContent[9], extractedContent[11], extractedContent[13], extractedContent[15]]
+
+        # Create and populate the CSV with the name from above
+        with open(csv_name2, 'w', encoding='UTF8', newline='') as f:
+            writer = csv.writer(f)
+
+            # Write the measured values
+            writer.writerow(header)
+            writer.writerow(row1)
+
+        # Set up the directory to be returned on top of the creation of the CSV
+        directory = dict([
+            ('ID', id),  # ID number if applicable
+            ('Exam Date', eDate),  # Exam Date
+            ('Eye', eyeFound),  # Right eye label
+            ('AL', extractedContent[1]),  # Axial Length of the right eye
+            ('CCT', extractedContent[3]),
+            ('ACD', extractedContent[5]),  # Anterior Chamber Depth Values for the right eye
+            ('LT', extractedContent[7]),
+            ('SE', extractedContent[9]),
+            ('K1', extractedContent[11]),  # Corneal Curvature Values k1 for the right eye
+            ('K2', extractedContent[13]),  # Corneal Curvature Values k2 for the right eye
+            ('ΔK', extractedContent[15])  # Anterior Chamber Depth Values for the left eye
+        ])
+
+        return directory
 
 
 def findValue(i, arr, val, lenlen):
