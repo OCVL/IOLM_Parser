@@ -229,7 +229,7 @@ class CSV_Class:
         header5 = "SE (D)"
         header6 = "Corneal Curvature K1 (D)"
         header7 = "Corneal Curvature K2 (D)"
-        header8 = "Detla K (D)"
+        header8 = "Delta K (D)"
 
         # Arrays to store values
         i = 0  # index into the stringList
